@@ -1,0 +1,11 @@
+thresholds:
+  cpu_percent: 80
+  ram_used_percent: 80
+  disk_used_percent: 80
+  temperature_celsius: 70
+email:
+  smtp_server: "smtp.gmail.com"
+  smtp_port: 587
+  sender_email: "your-email@gmail.com"
+  sender_password: "your-app-password"
+  recipient_email: "recipient@example.com"
