@@ -1,150 +1,166 @@
-Seaker-Alert-App: Linux Container Monitoring & Alert System
+# Seaker-Alert-App: Linux Container Monitoring & Alert System
+
 A system monitoring application for Linux containers, built with Python, Prometheus, and Grafana. Monitors CPU, RAM, disk, uptime, and temperature, with a Grafana dashboard and email alerts for threshold breaches.
 
-Features
-Monitors: CPU (%), RAM (GB), disk (GB), uptime (hours), temperature (°C).
+---
 
-Grafana Dashboard: Provides a web-based dashboard for real-time and historical data visualization.
+## Features
 
-Email Alerts: Configurable email notifications for high CPU, RAM, low disk space, or high temperature.
+- **Monitors:** CPU (%), RAM (GB), disk (GB), uptime (hours), temperature (°C)
+- **Grafana Dashboard:** Real-time and historical data visualization
+- **Email Alerts:** Configurable notifications for high CPU, RAM, low disk space, or high temperature
+- **Dockerized:** All components containerized for easy deployment and management
 
-Dockerized: All components are containerized for easy deployment and management.
+---
 
-Block Diagram
-![alt text](image.png)
+## Architecture
 
-Prerequisites
-Docker: Ensure Docker Desktop (or Docker Engine) is installed.
+![Block Diagram](image.png)
 
-Docker Compose: Included with Docker Desktop.
+- [`monitor.py`](monitor.py): Collects metrics and exposes them for Prometheus
+- Prometheus: Time-series database and scraper
+- Grafana: Dashboard and visualization
+- Alertmanager (optional): Routes email alerts
 
-Linux Container: The monitor.py script is designed for Linux environments. If running on Windows/macOS, Docker Desktop provides a Linux VM for containers.
+---
 
-SMTP Server: An SMTP server (e.g., Gmail with an App Password) is required for email alerts.
+## Prerequisites
 
-Setup
-Clone the repository:
+- **Docker:** [Install Docker](https://docs.docker.com/get-docker/)
+- **Docker Compose:** Included with Docker Desktop
+- **Linux Container:** [`monitor.py`](monitor.py) is designed for Linux environments
+- **SMTP Server:** Required for email alerts (e.g., Gmail with App Password)
 
+---
+
+## Setup
+
+### 1. Clone the Repository
+
+```sh
 git clone https://github.com/your-username/Seaker-Alert-App.git
 cd Seaker-Alert-App
+```
 
-(Note: This is a conceptual step as I cannot host a GitHub repository.)
+### 2. Configure `config.yaml`
 
-Configure config.yaml:
-Edit the config.yaml file to set your desired thresholds and email notification details.
+Edit [`config.yaml`](config.yaml) to set thresholds and email notification details:
 
-# config.yaml
-collection_interval_seconds: 5
-
+```yaml
 thresholds:
   cpu_percent: 80
   ram_used_percent: 80
   disk_used_percent: 80
   temperature_celsius: 70
-
 email:
   smtp_server: "smtp.gmail.com"
   smtp_port: 587
   sender_email: "your-email@gmail.com"
-  sender_password: "your-app-password" # Use an App Password for Gmail
+  sender_password: "your-app-password"
   recipient_email: "recipient@example.com"
+```
 
-(Note: The monitor.py provided earlier does not directly use the email section from config.yaml for sending emails. This would require integration with an Alertmanager and a separate Python script or a dedicated email client within the Docker setup. For the bare minimum, this config.yaml serves as a placeholder for the user's intended configuration.)
+---
 
-Run with Docker Compose:
-From the Seaker-Alert-App directory, execute:
+### 3. Run with Docker Compose
 
+```sh
 docker-compose up --build -d
+```
 
-This command will build the monitor service, pull Prometheus and Grafana images, and start all services in detached mode.
+This builds the monitor service, pulls Prometheus and Grafana images, and starts all services in detached mode.
 
-Dashboard Access
-URL: Open your web browser and navigate to:
+---
 
-Local: http://localhost:3000
+## Dashboard Access
 
-Server: http://<server-ip>:3000
+- **Local:** [http://localhost:3000](http://localhost:3000)
+- **Server:** `http://<server-ip>:3000`
 
-Login:
+**Login:**
+- Username: `admin`
+- Password: `admin` (change on first login)
 
-Username: admin
+### Add Prometheus Data Source
 
-Password: admin
-(You will be prompted to change the password on first login.)
+1. In Grafana, go to **Configuration > Data sources**
+2. Click **Add data source** and select **Prometheus**
+3. Set URL to `http://prometheus:9090`
+4. Click **Save & test**
 
-Add Prometheus data source:
+### Import Dashboard
 
-In Grafana, go to Configuration (gear icon) > Data sources.
+1. Go to **Dashboards > Import**
+2. Upload [`grafana_dashboard.json`](grafana_dashboard.json)
+3. Select Prometheus as the data source
 
-Click Add data source and select Prometheus.
+---
 
-Set the URL to http://prometheus:9090.
+## Viewing Data
 
-Click Save & test.
+- Dashboard updates every 5 seconds (based on [`monitor.py`](monitor.py) and Prometheus scrape interval)
+- Use time range selector for historical data
 
-Import grafana_dashboard.json:
+---
 
-Go to Dashboards (four squares icon) > Import.
+## Alerts & Thresholds
 
-Click Upload JSON file and select grafana_dashboard.json from your project directory.
+Alerts are configured in Prometheus's alert.rules and routed via Alertmanager. Reference thresholds in [`config.yaml`](config.yaml):
 
-Select Prometheus as the data source during import.
-
-View Data:
-
-The dashboard will display real-time data, updating every 5 seconds (based on monitor.py's collection interval and Prometheus's scrape interval).
-
-Use the time range selector (e.g., "Last 6 hours") to view historical data.
-
-Configure Alerts
-Alerts are primarily configured within Prometheus's alert.rules and routed via Alertmanager. The config.yaml provides the thresholds for reference.
-
-Edit config.yaml:
-Adjust the thresholds section in config.yaml to your desired values.
-
+```yaml
 thresholds:
   cpu_percent: 80          # Alert if CPU usage > 80%
-  ram_used_percent: 80     # Alert if RAM used > 80% (needs calculation in Prometheus rule)
-  disk_used_percent: 80    # Alert if Disk used > 80% (needs calculation in Prometheus rule)
+  ram_used_percent: 80     # Alert if RAM used > 80%
+  disk_used_percent: 80    # Alert if Disk used > 80%
   temperature_celsius: 70  # Alert if Temperature > 70°C
+```
 
-(Note: ram_used_percent and disk_used_percent are conceptual. The monitor.py currently exposes ram_used_gb, ram_total_gb, disk_used_gb, disk_total_gb. Prometheus rules would calculate percentages from these. The config.yaml is updated to reflect the user's desired percentage-based thresholds, but the Prometheus rules would need to be written to handle this conversion.)
+*Note: RAM and disk percentages are calculated in Prometheus rules using metrics exposed by [`monitor.py`](monitor.py).*
 
-Restart monitor service:
+---
 
-docker-compose restart monitor
+## Restarting Services
 
-(Note: For Prometheus to pick up new alerting rules, you would typically restart the Prometheus container, not the monitor. If you were to implement email alerts via Alertmanager, you would also configure Alertmanager and restart its container.)
+- Restart monitor:  
+  ```sh
+  docker-compose restart monitor
+  ```
+- Restart Prometheus for new alert rules:
+  ```sh
+  docker-compose restart prometheus
+  ```
 
-Test Alerts:
-To simulate high CPU usage and trigger an alert, you can execute a stress command inside the monitor container:
+---
 
+## Testing Alerts
+
+To simulate high CPU usage:
+
+```sh
 docker exec -it seaker-monitor-agent stress --cpu 4 --timeout 60s
+```
 
-(You may need to install stress inside the monitor container's Dockerfile or manually after starting the container for testing purposes: apt-get update && apt-get install -y stress).
+*You may need to install `stress` inside the monitor container:*
+```sh
+apt-get update && apt-get install -y stress
+```
 
-Observe the Grafana dashboard for the spike in CPU usage. If Prometheus alerts are configured (as outlined in the previous response's alert.rules example), you would see the alert in the Prometheus UI (http://localhost:9090/alerts).
+---
 
-Live Demo
-Deploy on a cloud server:
+## Live Demo (Cloud Deployment)
 
-Provision a Linux VM (e.g., AWS EC2, Google Cloud Compute Engine).
+1. Provision a Linux VM (AWS EC2, Google Cloud, etc.)
+2. Install Docker and Docker Compose
+3. Clone the repository and follow setup steps
+4. Open ports 3000, 8000, 9090 in firewall/security groups
+5. Access Grafana at `http://<server-ip>:3000`
+6. Simulate alerts and update thresholds as above
 
-Install Docker and Docker Compose.
+---
 
-Clone the repository and follow the Setup steps.
+## Repository & Images
 
-Ensure the necessary ports (3000, 8000, 9090) are open in your cloud provider's firewall/security groups.
+- GitHub: https://github.com/your-username/Seaker-Alert-App
+- Docker Hub (optional): `docker pull your-username/seaker-alert-app:latest`
 
-Access: Open your browser to http://<server-ip>:3000.
-
-Simulate alerts: Use the docker exec -it seaker-monitor-agent stress --cpu 4 --timeout 60s command on the server to simulate high CPU usage.
-
-Update thresholds: Demonstrate changing thresholds in config.yaml and restarting the monitor container to show the effect on alerts.
-
-Repository
-GitHub: https://github.com/your-username/Seaker-Alert-App
-
-Docker Hub (optional): docker pull your-username/seaker-alert-app:latest
-
-(Note: These links are placeholders as I cannot provide a live GitHub repository or Docker Hub image.)
+*Note: These links
