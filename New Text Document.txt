@@ -11,7 +11,18 @@ Email Alerts: Configurable email notifications for high CPU, RAM, low disk space
 Dockerized: All components are containerized for easy deployment and management.
 
 Block Diagram
-![alt text](image.png)
++---------------------+       +-----------------+       +---------------------+
+| monitor.py (Python) |       |                 |       |                     |
+| (Metric Collector)  | ----> | Prometheus      | <---->| Grafana             |
+| (Exposes /metrics)  |       | (TSDB & Scraper)|       | (Dashboard & Viz)   |
++---------------------+       +-----------------+       +---------------------+
+       ^                                |
+       |                                |
+       |                                V
+       |                         +-----------------+
+       |                         | Alertmanager    |
+       |                         | (Routes Emails) |
+       +-------------------------+-----------------+
 
 Prerequisites
 Docker: Ensure Docker Desktop (or Docker Engine) is installed.
