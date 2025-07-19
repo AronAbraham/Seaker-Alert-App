@@ -147,16 +147,6 @@ apt-get update && apt-get install -y stress
 
 ---
 
-## Live Demo (Cloud Deployment)
-
-1. Provision a Linux VM (AWS EC2, Google Cloud, etc.)
-2. Install Docker and Docker Compose
-3. Clone the repository and follow setup steps
-4. Open ports 3000, 8000, 9090 in firewall/security groups
-5. Access Grafana at `http://<server-ip>:3000`
-6. Simulate alerts and update thresholds as above
-
----
 
 ## Repository & Images
 
